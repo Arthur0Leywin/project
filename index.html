@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Recall — your study space, sorted</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="Recall home">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span>recall<span class="brand-period">.</span></span>
+      </a>
+
+      <button class="workspace-switcher">
+        <span class="workspace-avatar">S</span>
+        <span class="workspace-copy"><strong>Study space</strong><small>Personal workspace</small></span>
+        <span class="chevron">⌄</span>
+      </button>
+
+      <div class="side-label">WORKSPACE</div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="all"><span class="nav-icon">▦</span> All documents <span class="nav-count" id="all-count">0</span></button>
+        <button class="nav-item" data-view="starred"><span class="nav-icon">☆</span> Starred</button>
+        <button class="nav-item" data-view="recent"><span class="nav-icon">◷</span> Recently added</button>
+      </nav>
+
+      <div class="side-label subject-label">SUBJECTS <button id="add-subject" class="tiny-add" aria-label="Add subject">+</button></div>
+      <nav class="subject-nav" id="subject-nav" aria-label="Subjects"></nav>
+
+      <div class="storage-card">
+        <div class="storage-heading"><span>Storage</span><span id="storage-text">0 MB of 500 MB</span></div>
+        <div class="storage-track"><span id="storage-fill"></span></div>
+        <p>Your study library is looking good.</p>
+        <button id="upload-sidebar" class="storage-upload">↑ &nbsp; Upload a document</button>
+      </div>
+      <div class="sidebar-bottom"><span class="avatar">J</span><span><strong>Jamie Parker</strong><small>Free plan</small></span><button aria-label="More account options">···</button></div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Study space</span><span class="crumb-slash">/</span><strong id="breadcrumb-current">All documents</strong></div>
+        <div class="topbar-actions"><button class="help-button" title="Help">?</button><span class="top-avatar">J</span></div>
+      </header>
+
+      <section class="content">
+        <div class="welcome-row">
+          <div>
+            <p class="eyebrow"><span class="sparkle">✳</span> YOUR SECOND BRAIN FOR STUDYING</p>
+            <h1 id="page-title">Everything in its <span>right place.</span></h1>
+            <p class="welcome-subtitle">Your notes, readings, and assignments — organized and ready when you need them.</p>
+          </div>
+          <button class="primary-button" id="upload-main"><span>＋</span> Add documents</button>
+        </div>
+
+        <section class="search-panel" aria-label="Search documents">
+          <div class="search-icon">⌕</div>
+          <input id="search-input" type="search" placeholder="Ask anything or search your documents..." autocomplete="off" />
+          <kbd>⌘ K</kbd>
+          <button id="search-button" class="search-submit">Search <span>↗</span></button>
+          <div class="search-suggestions"><span class="suggestion-sparkle">✦</span> Try <button class="query-chip">“What are the key ideas in my biology notes?”</button></div>
+        </section>
+
+        <div class="section-toolbar">
+          <div class="section-title-wrap"><h2 id="list-heading">Your documents</h2><span class="document-total" id="document-total">0</span></div>
+          <div class="toolbar-right">
+            <button class="sort-button" id="sort-button"><span>☷</span> Recently added <span class="sort-chevron">⌄</span></button>
+            <div class="view-toggle"><button class="view-button selected" data-layout="grid" aria-label="Grid view">▦</button><button class="view-button" data-layout="list" aria-label="List view">☰</button></div>
+          </div>
+        </div>
+
+        <div class="document-grid" id="document-grid"></div>
+        <div class="empty-state hidden" id="empty-state">
+          <div class="empty-icon">✳</div>
+          <h3 id="empty-title">Your study space starts here</h3>
+          <p id="empty-copy">Drop in your notes, lecture slides, or readings. We’ll help you make sense of it all.</p>
+          <button class="primary-button" id="empty-upload">＋ Add your first document</button>
+        </div>
+        <div class="search-answer hidden" id="search-answer"></div>
+        <footer class="content-footer"><span>Made for curious minds <span class="footer-heart">♥</span></span><span>Everything you need to remember, in one place.</span></footer>
+      </section>
+    </main>
+  </div>
+
+  <input id="file-input" type="file" accept=".pdf,.txt,.md,.doc,.docx,.csv" multiple hidden />
+  <div class="toast" id="toast" role="status"></div>
+  <div class="modal-backdrop hidden" id="modal-backdrop">
+    <section class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <button class="modal-close" id="modal-close" aria-label="Close document">×</button>
+      <div id="detail-content"></div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
