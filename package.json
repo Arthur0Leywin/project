@@ -1,0 +1,17 @@
+{
+  "name": "recall-study-space",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "mammoth": "^1.13.0",
+    "next": "^16.4.4",
+    "pdfjs-dist": "^6.5.438",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
