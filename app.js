@@ -1,7 +1,30 @@
-const SUBJECTS = ["Biology", "History", "Psychology", "Literature"];
+const DEFAULT_SUBJECTS = ["Biology", "History", "Psychology", "Literature"];
+const SUBJECTS_KEY = "recall-subjects-v1";
+const SUBJECT_KEYWORDS = {
+  Biology: ["biology", "cell", "cells", "genetics", "gene", "genes", "evolution", "organism", "organisms", "ecosystem", "ecology", "photosynthesis", "anatomy", "dna", "protein", "species", "biology", "mitochondria"],
+  History: ["history", "historical", "revolution", "war", "empire", "ancient", "medieval", "timeline", "civilization", "century", "king", "queen", "battle", "treaty", "colonial"],
+  Psychology: ["psychology", "psychological", "memory", "cognition", "behavior", "behaviour", "emotion", "learning", "brain", "mental", "perception", "personality", "motivation", "therapy"],
+  Literature: ["literature", "novel", "poem", "poetry", "author", "character", "theme", "fiction", "prose", "gatsby", "story", "narrative", "shakespeare", "metaphor"]
+};
 const COLORS = ["#f3a268", "#69c6a5", "#8c78e0", "#e79aaf", "#68a0dd"];
 const STORAGE_KEY = "recall-documents-v1";
+const CONTENT_DB = "recall-document-content-v1";
+const CONTENT_STORE = "documents";
 const SEARCH_STOP_WORDS = new Set(["what", "which", "where", "when", "who", "whom", "whose", "why", "how", "the", "and", "for", "from", "with", "about", "into", "that", "this", "these", "those", "are", "was", "were", "is", "in", "on", "of", "to", "my", "me", "i", "a", "an", "it", "its", "key", "ideas", "notes", "document", "documents", "tell", "show", "find"]);
+const STUDY_STOP_WORDS = new Set(["also", "based", "called", "different", "example", "examples", "first", "include", "includes", "including", "information", "important", "key", "large", "made", "make", "many", "mean", "means", "moves", "new", "often", "part", "people", "process", "processes", "produce", "shows", "shown", "small", "such", "things", "through", "used", "uses", "using", "ways", "within"]);
+
+function loadCustomSubjects() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SUBJECTS_KEY) || "[]");
+    return Array.isArray(saved) ? saved.filter(item => item && typeof item.name === "string") : [];
+  } catch (error) {
+    console.error("Could not load saved subjects:", error);
+    return [];
+  }
+}
+
+const customSubjects = loadCustomSubjects();
+const SUBJECTS = [...DEFAULT_SUBJECTS, ...customSubjects.map(item => item.name)];
 
 const starterDocuments = [
   {
@@ -66,10 +89,84 @@ function loadDocuments() {
 
 function saveDocuments() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+    const savedDocuments = documents.map(doc => {
+      if (!doc.contentStored) return doc;
+      const { text, fileBlob, ...metadata } = doc;
+      return metadata;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDocuments));
   } catch (error) {
     showToast("Couldn't save changes. Your browser storage may be full.");
     console.error("Could not save documents:", error);
+  }
+}
+
+function openContentDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(CONTENT_DB, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(CONTENT_STORE, { keyPath: "id" });
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveDocumentContent(id, file, text) {
+  const database = await openContentDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(CONTENT_STORE, "readwrite");
+    transaction.objectStore(CONTENT_STORE).put({ id, file, text });
+    transaction.oncomplete = () => { database.close(); resolve(); };
+    transaction.onerror = () => { database.close(); reject(transaction.error); };
+  });
+}
+
+async function getDocumentContent(id) {
+  const database = await openContentDatabase();
+  return new Promise((resolve, reject) => {
+    const request = database.transaction(CONTENT_STORE).objectStore(CONTENT_STORE).get(id);
+    request.onsuccess = () => { database.close(); resolve(request.result); };
+    request.onerror = () => { database.close(); reject(request.error); };
+  });
+}
+
+async function removeDocumentContent(id) {
+  const database = await openContentDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(CONTENT_STORE, "readwrite");
+    transaction.objectStore(CONTENT_STORE).delete(id);
+    transaction.oncomplete = () => { database.close(); resolve(); };
+    transaction.onerror = () => { database.close(); reject(transaction.error); };
+  });
+}
+
+async function restoreDocumentContent() {
+  const savedContentDocs = documents.filter(doc => doc.contentStored);
+  if (!savedContentDocs.length) return;
+  for (const doc of savedContentDocs) {
+    try {
+      const content = await getDocumentContent(doc.id);
+      if (!content) {
+        doc.fileUnavailable = true;
+        continue;
+      }
+      doc.text = content.text || "";
+      doc.fileBlob = content.file;
+      doc.fileUrl = URL.createObjectURL(content.file);
+    } catch (error) {
+      console.error(`Could not restore ${doc.title}:`, error);
+      doc.fileUnavailable = true;
+    }
+  }
+}
+
+function saveSubjects() {
+  try {
+    localStorage.setItem(SUBJECTS_KEY, JSON.stringify(customSubjects));
+    return true;
+  } catch (error) {
+    showToast("Couldn't save your categories. Your browser storage may be full.");
+    console.error("Could not save subjects:", error);
+    return false;
   }
 }
 
@@ -141,6 +238,46 @@ function getTerms(text) {
   return text.toLowerCase().match(/[a-z0-9]+/g) || [];
 }
 
+function normalizeText(text) {
+  return ` ${getTerms(text).join(" ")} `;
+}
+
+function categorizeDocument(title, text) {
+  const fileName = normalizeText(title);
+  const content = normalizeText(text);
+  const categories = [...new Set([...SUBJECTS, ...documents.map(doc => doc.subject).filter(Boolean)])];
+  let bestSubject = "Uncategorized";
+  let bestScore = 0;
+  let tied = false;
+
+  categories.forEach(subject => {
+    const custom = customSubjects.find(item => item.name === subject);
+    const keywords = [...new Set([
+      ...(SUBJECT_KEYWORDS[subject] || []),
+      ...getTerms(subject),
+      ...(Array.isArray(custom?.keywords) ? custom.keywords : [])
+    ].filter(keyword => typeof keyword === "string").map(keyword => normalizeText(keyword).trim()).filter(Boolean))];
+    let score = 0;
+    keywords.forEach(keyword => {
+      const terms = getTerms(keyword);
+      const matches = value => value.includes(` ${keyword} `) || (
+        terms.length === 1 && new RegExp(` ${terms[0]}(?:s|es)? `).test(value)
+      );
+      if (matches(fileName)) score += 4;
+      if (matches(content)) score += 2;
+    });
+    if (score > bestScore) {
+      bestSubject = subject;
+      bestScore = score;
+      tied = false;
+    } else if (score && score === bestScore) {
+      tied = true;
+    }
+  });
+
+  return tied ? "Uncategorized" : bestSubject;
+}
+
 function renderSearchAnswer() {
   const panel = document.getElementById("search-answer");
   if (!searchQuery) {
@@ -155,33 +292,53 @@ function renderSearchAnswer() {
     panel.innerHTML = "";
     return;
   }
-  const excerpts = matches.slice(0, 2).map(({ doc }) => {
-    const sentences = (doc.text.match(/[^.!?]+[.!?]+/g) || [doc.summary]).map(sentence => sentence.trim());
-    const best = sentences.find(sentence => queryTerms.some(term => sentence.toLowerCase().includes(term))) || sentences[0];
-    return best;
+  const excerpts = matches.map(({ doc }) => {
+    const sentence = rankSentences(doc.text || doc.summary || "", queryTerms)[0];
+    return sentence ? `<p><strong>${escapeHtml(doc.title)}:</strong> ${escapeHtml(sentence)}</p>` : "";
   });
-  panel.innerHTML = `<div class="answer-heading"><span class="suggestion-sparkle">✦</span> A little help from your notes</div><div>${escapeHtml(excerpts.join(" "))}</div><div>${matches.map(({ doc }) => `<span class="answer-source">${escapeHtml(doc.title)}</span>`).join("")}</div>`;
+  panel.innerHTML = `<div class="answer-heading"><span class="suggestion-sparkle">✦</span> Best matches in your notes</div>${excerpts.join("")}<div>${matches.map(({ doc }) => `<span class="answer-source">${escapeHtml(doc.title)}</span>`).join("")}</div>`;
   panel.classList.remove("hidden");
 }
 
-function summarize(text) {
-  const sentences = (text.match(/[^.!?]+[.!?]+/g) || [text]).map(sentence => sentence.trim()).filter(Boolean);
-  if (sentences.length <= 2) return sentences.join(" ");
-  const words = getTerms(text);
+function getSentences(text) {
+  return (text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [])
+    .map(sentence => sentence.trim())
+    .filter(sentence => sentence.length > 25);
+}
+
+function rankSentences(text, preferredTerms = []) {
+  const sentences = getSentences(text);
   const frequency = {};
-  words.forEach(word => { if (word.length > 3) frequency[word] = (frequency[word] || 0) + 1; });
-  const ranked = sentences.map((sentence, index) => ({
-    sentence, index,
-    score: getTerms(sentence).reduce((sum, word) => sum + (frequency[word] || 0), 0) / Math.max(1, getTerms(sentence).length)
-  })).sort((a, b) => b.score - a.score).slice(0, 2).sort((a, b) => a.index - b.index);
-  return ranked.map(item => item.sentence).join(" ");
+  getTerms(text).forEach(word => {
+    if (word.length > 3 && !SEARCH_STOP_WORDS.has(word)) frequency[word] = (frequency[word] || 0) + 1;
+  });
+  return sentences.map((sentence, index) => {
+    const words = getTerms(sentence);
+    const relevance = preferredTerms.reduce((score, term) => score + (words.includes(term) ? 3 : 0), 0);
+    const importance = words.reduce((score, word) => score + (frequency[word] || 0), 0) / Math.max(1, words.length);
+    return { sentence, index, score: relevance + importance };
+  }).sort((a, b) => b.score - a.score).map(item => item.sentence);
+}
+
+function summarize(text) {
+  const sentences = getSentences(text);
+  return rankSentences(text).slice(0, Math.min(4, Math.max(2, Math.ceil(sentences.length / 8))))
+    .sort((a, b) => sentences.indexOf(a) - sentences.indexOf(b))
+    .join(" ");
 }
 
 function extractPoints(text) {
-  const sentences = (text.match(/[^.!?]+[.!?]+/g) || [text]).map(sentence => sentence.trim()).filter(sentence => sentence.length > 35);
-  const cues = /\b(is|are|means|because|therefore|important|key|causes|result|such as|for example|increased|reduces|uses|produces|represents|began|created)\b/i;
-  const selected = sentences.filter(sentence => cues.test(sentence)).slice(0, 4);
-  return (selected.length ? selected : sentences.slice(0, 4)).map(sentence => sentence.replace(/^[•\-\s]+/, ""));
+  return rankSentences(text).slice(0, 6).map(sentence => sentence.replace(/^[•\-\s]+/, ""));
+}
+
+function extractKeyTerms(text) {
+  const counts = {};
+  getTerms(text).forEach(term => {
+    if ((term.length > 3 || /^(dna|rna|atp)$/.test(term)) && !SEARCH_STOP_WORDS.has(term) && !STUDY_STOP_WORDS.has(term) && !/^\d+$/.test(term)) {
+      counts[term] = (counts[term] || 0) + 1;
+    }
+  });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([term]) => term);
 }
 
 function showToast(message) {
@@ -196,26 +353,73 @@ function openDocument(id) {
   if (!doc) return;
   const points = doc.points?.length ? doc.points : extractPoints(doc.text || "");
   const hasText = Boolean(doc.text && doc.text.trim());
+  const keyTerms = hasText ? extractKeyTerms(doc.text) : [];
+  const categories = [...new Set([...SUBJECTS, ...documents.map(item => item.subject).filter(Boolean)])];
+  if (doc.fileBlob && !doc.fileUrl) doc.fileUrl = URL.createObjectURL(doc.fileBlob);
+  const preview = doc.fileUrl && doc.fileType === "pdf"
+    ? `<section class="detail-section"><h3>Original document</h3><iframe class="document-preview" src="${doc.fileUrl}" title="Full PDF: ${escapeHtml(doc.title)}"></iframe><a class="document-open-link" href="${doc.fileUrl}" target="_blank" rel="noopener">Open PDF in a new tab</a></section>`
+    : doc.fileUrl
+      ? `<section class="detail-section"><h3>Original document</h3><a class="document-open-link" href="${doc.fileUrl}" download="${escapeHtml(doc.fileName || doc.title)}">Open or download original file</a></section>`
+      : "";
+  const studyTools = hasText
+    ? `<section class="detail-section"><h3>Study tools</h3><div class="detail-actions"><button class="secondary-button" id="show-flashcards">Create flashcards</button><button class="secondary-button" id="show-quiz">Practice questions</button></div><div id="study-output"></div></section>`
+    : "";
   document.getElementById("detail-content").innerHTML = `
     <div class="detail-header"><div class="file-badge ${escapeHtml(doc.fileType)}">${doc.fileType === "pdf" ? "PDF" : doc.fileType === "slides" ? "SLIDES" : doc.fileType === "doc" ? "DOC" : "NOTES"}</div><div><h2 id="detail-title">${escapeHtml(doc.title)}</h2><div class="detail-meta">${escapeHtml(doc.subject || "Uncategorized")} &nbsp;·&nbsp; ${formatSize(Number(doc.size) || 0)} &nbsp;·&nbsp; Added ${escapeHtml(doc.date || "just now")}</div></div></div>
+    <section class="detail-section"><h3>Category</h3><select class="secondary-button" id="detail-subject" aria-label="Change document category"><option value="Uncategorized" ${!doc.subject || doc.subject === "Uncategorized" ? "selected" : ""}>Uncategorized</option>${categories.map(subject => `<option value="${escapeHtml(subject)}" ${doc.subject === subject ? "selected" : ""}>${escapeHtml(subject)}</option>`).join("")}</select></section>
     <section class="detail-section"><h3>✦ &nbsp;Quick summary</h3><p>${escapeHtml(doc.summary || (hasText ? summarize(doc.text) : "This document is saved in your library. Add a text version to generate a summary and key points."))}</p></section>
+    ${keyTerms.length ? `<section class="detail-section"><h3>Key terms</h3><p>${keyTerms.map(term => `<span class="answer-source">${escapeHtml(term)}</span>`).join("")}</p></section>` : ""}
     <section class="detail-section"><h3>Key points</h3>${points.length ? `<ul>${points.map(point => `<li>${escapeHtml(point)}</li>`).join("")}</ul>` : "<p>We couldn't extract readable text from this file yet.</p>"}</section>
-    ${hasText ? `<section class="detail-section"><h3>Document text</h3><p>${escapeHtml(doc.text.slice(0, 1400))}${doc.text.length > 1400 ? "…" : ""}</p></section>` : `<section class="detail-section"><p>Text extraction works for .txt, .md, and .csv files in this prototype. PDF and Word files are saved in your library, ready for a future AI/API integration.</p></section>`}
+    ${studyTools}
+    ${preview}
+    ${hasText ? `<section class="detail-section"><h3>Full document text</h3><pre class="document-text">${escapeHtml(doc.text)}</pre></section>` : `<section class="detail-section"><p>${escapeHtml(doc.extractionWarning || (doc.fileType === "doc" ? "This older .doc file is saved as-is. Its original can be downloaded, but automatic text extraction is not supported; upload a .docx version for study tools." : "No readable text is available for this document. Image-only PDFs need OCR before summaries and study tools can be generated."))}</p></section>`}
     <div class="detail-actions"><button class="secondary-button" id="detail-star">${doc.starred ? "★ Starred" : "☆ Add to starred"}</button><button class="secondary-button" id="detail-delete">Remove document</button></div>`;
   document.getElementById("modal-backdrop").classList.remove("hidden");
+  document.getElementById("detail-subject").onchange = event => {
+    doc.subject = event.target.value;
+    saveDocuments();
+    render();
+    openDocument(id);
+    showToast(`Category changed to ${doc.subject}.`);
+  };
   document.getElementById("detail-star").onclick = () => {
     doc.starred = !doc.starred;
     saveDocuments();
     render();
     openDocument(id);
   };
+  if (hasText) {
+    document.getElementById("show-flashcards").onclick = () => renderStudyQuestions(doc, "flashcards");
+    document.getElementById("show-quiz").onclick = () => renderStudyQuestions(doc, "quiz");
+  }
   document.getElementById("detail-delete").onclick = () => {
     documents = documents.filter(item => item.id !== id);
+    if (doc.fileUrl) URL.revokeObjectURL(doc.fileUrl);
+    removeDocumentContent(id).catch(error => console.error("Could not remove saved document file:", error));
     saveDocuments();
     closeModal();
     render();
     showToast("Document removed from your library.");
   };
+}
+
+function renderStudyQuestions(doc, mode) {
+  const terms = extractKeyTerms(doc.text || "").slice(0, 6);
+  const sentences = getSentences(doc.text || "");
+  const cards = terms.map(term => ({
+    question: mode === "flashcards" ? `What do these notes say about “${term}”?` : `Which statement about “${term}” is correct?`,
+    answer: sentences.find(sentence => getTerms(sentence).includes(term))
+  })).filter(card => card.answer);
+  const output = document.getElementById("study-output");
+  if (!cards.length) {
+    output.innerHTML = "<p>There isn't enough readable text to make study questions yet.</p>";
+    return;
+  }
+  output.innerHTML = cards.map((card, index) => `
+    <details class="study-card">
+      <summary>${mode === "flashcards" ? `Card ${index + 1}: ` : `Question ${index + 1}: `}${escapeHtml(card.question)}</summary>
+      <p>${escapeHtml(card.answer)}</p>
+    </details>`).join("");
 }
 
 function closeModal() {
@@ -226,45 +430,86 @@ async function readFile(file) {
   const extension = file.name.split(".").pop().toLowerCase();
   const fileType = extension === "pdf" ? "pdf" : ["ppt", "pptx"].includes(extension) ? "slides" : ["doc", "docx"].includes(extension) ? "doc" : "notes";
   let text = "";
+  let extractionWarning = "";
   if (["txt", "md", "csv"].includes(extension)) {
     try { text = await file.text(); }
     catch (error) { console.error(`Could not read ${file.name}:`, error); showToast(`Couldn't read ${file.name}.`); return; }
+  } else if (["pdf", "docx"].includes(extension)) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/extract", { method: "POST", body: formData });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Document extraction failed.");
+      text = result.text || "";
+      extractionWarning = result.warning || "";
+    } catch (error) {
+      console.error(`Could not analyze ${file.name}:`, error);
+      extractionWarning = error.message;
+    }
   }
-  const subject = SUBJECTS.find(name => file.name.toLowerCase().includes(name.toLowerCase())) || "Uncategorized";
+  const title = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+  const subject = categorizeDocument(title, text);
   const doc = {
     id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    title: file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "),
-    subject, kind: fileType, fileType, size: file.size / (1024 * 1024),
+    title,
+    subject, kind: fileType, fileType, fileName: file.name, size: file.size / (1024 * 1024),
     date: "Just now", addedAt: Date.now(), text,
     summary: text ? summarize(text) : "",
     points: text ? extractPoints(text) : [],
-    starred: false
+    starred: false,
+    contentStored: true,
+    fileBlob: file,
+    extractionWarning
   };
+  try {
+    await saveDocumentContent(doc.id, file, text);
+  } catch (error) {
+    console.error(`Could not save uploaded file ${file.name}:`, error);
+    showToast(`Couldn't save ${file.name}; check browser storage and try again.`);
+    return;
+  }
+  doc.fileUrl = URL.createObjectURL(file);
   documents.unshift(doc);
 }
 
 async function importFiles(files) {
   if (!files.length) return;
-  for (const file of files) await readFile(file);
+  let added = 0;
+  for (const file of files) {
+    const before = documents.length;
+    await readFile(file);
+    if (documents.length > before) added += 1;
+  }
   saveDocuments();
   activeView = "all";
   activeSubject = null;
   searchQuery = "";
   searchInput.value = "";
   render();
-  showToast(`${files.length} document${files.length === 1 ? "" : "s"} added to your study space.`);
+  if (added) showToast(`${added} document${added === 1 ? "" : "s"} added to your study space.`);
+  const warning = documents.find(doc => doc.extractionWarning)?.extractionWarning;
+  if (warning) showToast(warning);
   fileInput.value = "";
 }
 
 document.querySelectorAll("#upload-main, #upload-sidebar, #empty-upload").forEach(button => button.addEventListener("click", () => fileInput.click()));
 fileInput.addEventListener("change", event => importFiles([...event.target.files]));
 document.getElementById("add-subject").addEventListener("click", () => {
-  const subject = window.prompt("Name your new subject:");
-  if (subject?.trim() && !SUBJECTS.includes(subject.trim()) && !documents.some(doc => doc.subject === subject.trim())) {
-    SUBJECTS.push(subject.trim());
-    render();
-    showToast(`${subject.trim()} added to your subjects.`);
+  const subject = window.prompt("Name your new category:");
+  if (!subject?.trim()) return;
+  const name = subject.trim();
+  if ([...SUBJECTS, ...documents.map(doc => doc.subject)].some(item => item?.toLowerCase() === name.toLowerCase())) {
+    showToast("That category already exists.");
+    return;
   }
+  const keywordInput = window.prompt("Optional: add keywords to help categorize uploads (separate with commas):") || "";
+  const keywords = keywordInput.split(",").map(keyword => keyword.trim()).filter(Boolean);
+  customSubjects.push({ name, keywords });
+  SUBJECTS.push(name);
+  const saved = saveSubjects();
+  render();
+  if (saved) showToast(`${name} added to your categories.`);
 });
 document.querySelector(".main-nav").addEventListener("click", event => {
   const button = event.target.closest("[data-view]");
@@ -358,4 +603,9 @@ document.getElementById("sort-button").addEventListener("click", () => {
   render();
   showToast("Document order updated.");
 });
-render();
+restoreDocumentContent()
+  .catch(error => {
+    console.error("Could not restore saved document files:", error);
+    showToast("Some saved files could not be opened from browser storage.");
+  })
+  .finally(render);

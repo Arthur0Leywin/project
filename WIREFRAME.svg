@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1435" viewBox="0 0 1440 1435" role="img" aria-labelledby="title description">
+  <title id="title">Recall dashboard and document detail wireframe</title>
+  <desc id="description">Desktop study document dashboard, a separate centered document-detail modal state, and key upload, search, category, and study flows.</desc>
+  <defs>
+    <style>
+      text { font-family: Arial, sans-serif; fill: #24233a; }
+      .muted { fill: #89899b; }
+      .small { font-size: 13px; }
+      .label { font-size: 15px; font-weight: bold; }
+      .outline { fill: #fff; stroke: #d9d7e2; stroke-width: 2; }
+      .soft { fill: #f7f6fb; stroke: #e6e3ee; stroke-width: 1.5; }
+      .purple { fill: #f0ebff; stroke: #7658e8; stroke-width: 2; }
+      .flow { fill: #fff; stroke: #c9c4d8; stroke-width: 2; }
+      .line { stroke: #dedbe7; stroke-width: 2; }
+      .arrow { stroke: #7658e8; stroke-width: 2.5; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 Z" fill="#7658e8"/>
+    </marker>
+  </defs>
+
+  <rect width="1440" height="1120" fill="#f8f8fb"/>
+  <text x="54" y="48" font-size="24" font-weight="bold">Recall — screen layout</text>
+  <text x="54" y="73" class="small muted">Main dashboard · Computer screen · Shows where things go and how they work</text>
+
+  <rect x="54" y="102" width="1332" height="740" rx="14" class="outline"/>
+  <rect x="54" y="102" width="242" height="740" rx="14" fill="#fff" stroke="#d9d7e2" stroke-width="2"/>
+  <line x1="296" y1="102" x2="296" y2="842" class="line"/>
+
+  <rect x="78" y="128" width="34" height="34" rx="10" class="purple"/>
+  <text x="124" y="153" font-size="23" font-weight="bold">recall.</text>
+  <rect x="76" y="184" width="197" height="58" rx="10" class="soft"/>
+  <text x="91" y="208" class="label">Study space</text>
+  <text x="91" y="229" class="small muted">Personal workspace</text>
+
+  <text x="80" y="278" class="small muted">WORKSPACE</text>
+  <rect x="72" y="291" width="207" height="42" rx="8" class="purple"/>
+  <text x="90" y="318" class="small">All documents</text>
+  <text x="254" y="318" class="small muted">#</text>
+  <text x="90" y="360" class="small">Starred</text>
+  <text x="90" y="400" class="small">Recently added</text>
+
+  <text x="80" y="449" class="small muted">SUBJECTS</text>
+  <circle cx="87" cy="476" r="5" fill="#f3a268"/>
+  <text x="101" y="481" class="small">Biology</text>
+  <circle cx="87" cy="508" r="5" fill="#69c6a5"/>
+  <text x="101" y="513" class="small">History</text>
+  <circle cx="87" cy="540" r="5" fill="#8c78e0"/>
+  <text x="101" y="545" class="small">Psychology</text>
+  <circle cx="87" cy="572" r="5" fill="#e79aaf"/>
+  <text x="101" y="577" class="small">Literature</text>
+  <text x="258" y="449" font-size="20" class="muted">+</text>
+  <text x="80" y="601" font-size="11" class="muted">+ add a category</text>
+
+  <rect x="73" y="677" width="205" height="91" rx="10" class="soft"/>
+  <text x="88" y="702" class="small">Storage · used / limit</text>
+  <rect x="88" y="715" width="174" height="6" rx="3" fill="#e8e5f1"/>
+  <rect x="88" y="715" width="52" height="6" rx="3" fill="#7658e8"/>
+  <rect x="88" y="734" width="174" height="25" rx="6" class="outline"/>
+  <text x="108" y="751" font-size="11">Upload a document</text>
+
+  <rect x="296" y="102" width="1090" height="52" fill="#fff" opacity=".8"/>
+  <text x="326" y="134" class="small muted">Study space /</text>
+  <text x="424" y="134" class="small">All documents</text>
+  <circle cx="1330" cy="128" r="15" class="soft"/>
+  <text x="1326" y="133" class="small">J</text>
+  <line x1="296" y1="154" x2="1386" y2="154" class="line"/>
+
+  <text x="338" y="201" font-size="12" font-weight="bold" class="muted">YOUR SECOND BRAIN FOR STUDYING</text>
+  <text x="338" y="241" font-size="28" font-weight="bold">Everything in its right place.</text>
+  <text x="338" y="268" class="small muted">Notes, readings, and assignments — organized and ready when you need them.</text>
+  <rect x="1168" y="210" width="184" height="44" rx="8" fill="#7658e8"/>
+  <text x="1192" y="238" font-size="14" fill="#fff">+ Add documents</text>
+
+  <rect x="338" y="292" width="1014" height="90" rx="12" class="outline"/>
+  <text x="360" y="328" font-size="25" class="muted">⌕</text>
+  <text x="397" y="325" class="small muted">Ask anything or search your documents...</text>
+  <rect x="1118" y="307" width="59" height="28" rx="5" class="soft"/>
+  <text x="1129" y="326" font-size="11" class="muted">⌘ K</text>
+  <rect x="1202" y="307" width="126" height="34" rx="7" class="purple"/>
+  <text x="1227" y="329" class="small">Search</text>
+  <text x="398" y="359" font-size="11" class="muted">Try a question about your notes · Search shows matching parts</text>
+
+  <text x="338" y="424" font-size="17" font-weight="bold">Your documents</text>
+  <rect x="462" y="405" width="31" height="25" rx="6" class="soft"/>
+  <text x="473" y="422" font-size="12" class="muted">#</text>
+  <rect x="1135" y="399" width="128" height="32" rx="7" class="outline"/>
+  <text x="1151" y="420" font-size="11">Sort / recent</text>
+  <rect x="1275" y="399" width="77" height="32" rx="7" class="outline"/>
+  <text x="1290" y="420" font-size="11">Grid / list</text>
+
+  <g>
+    <rect x="338" y="446" width="320" height="164" rx="10" class="outline"/>
+    <rect x="355" y="463" width="35" height="35" rx="8" class="soft"/>
+    <text x="362" y="485" font-size="10">PDF</text>
+    <text x="625" y="478" font-size="16" class="muted">···</text>
+    <text x="355" y="521" font-size="11" class="muted">Biology</text>
+    <text x="355" y="544" class="label">Document title</text>
+    <text x="355" y="566" font-size="11" class="muted">Short summary or document preview...</text>
+    <line x1="355" y1="583" x2="641" y2="583" class="line"/>
+    <text x="355" y="599" font-size="10" class="muted">File size · date</text>
+    <text x="617" y="599" font-size="14" fill="#efa94f">☆</text>
+
+    <rect x="676" y="446" width="320" height="164" rx="10" class="outline"/>
+    <rect x="693" y="463" width="35" height="35" rx="8" class="soft"/>
+    <text x="700" y="485" font-size="10">DOC</text>
+    <text x="963" y="478" font-size="16" class="muted">···</text>
+    <text x="693" y="521" font-size="11" class="muted">History</text>
+    <text x="693" y="544" class="label">Document title</text>
+    <text x="693" y="566" font-size="11" class="muted">Short summary or document preview...</text>
+    <line x1="693" y1="583" x2="979" y2="583" class="line"/>
+    <text x="693" y="599" font-size="10" class="muted">File size · date</text>
+    <text x="955" y="599" font-size="14" fill="#efa94f">★</text>
+
+    <rect x="1014" y="446" width="338" height="164" rx="10" class="outline"/>
+    <rect x="1031" y="463" width="35" height="35" rx="8" class="soft"/>
+    <text x="1036" y="485" font-size="9">NOTES</text>
+    <text x="1318" y="478" font-size="16" class="muted">···</text>
+    <text x="1031" y="521" font-size="11" class="muted">Psychology</text>
+    <text x="1031" y="544" class="label">Document title</text>
+    <text x="1031" y="566" font-size="11" class="muted">Short summary or document preview...</text>
+    <line x1="1031" y1="583" x2="1335" y2="583" class="line"/>
+    <text x="1031" y="599" font-size="10" class="muted">File size · date</text>
+    <text x="1310" y="599" font-size="14" fill="#efa94f">☆</text>
+  </g>
+
+  <line x1="338" y1="655" x2="1352" y2="655" class="line"/>
+  <text x="338" y="681" font-size="11" class="muted">On phones, the menu becomes icons and cards stack in one column.</text>
+
+  <text x="54" y="742" font-size="20" font-weight="bold">Document details · pop-up after you select a file</text>
+  <rect x="54" y="766" width="1332" height="388" rx="14" fill="#eeedf4" stroke="#d9d7e2" stroke-width="2"/>
+  <rect x="424" y="791" width="710" height="338" rx="15" class="outline"/>
+  <rect x="1092" y="804" width="24" height="24" rx="6" class="soft"/>
+  <text x="1099" y="822" class="small muted">×</text>
+  <rect x="449" y="811" width="35" height="35" rx="8" class="soft"/>
+  <text x="457" y="833" font-size="10">PDF</text>
+  <text x="497" y="825" class="label">Document title</text>
+  <text x="497" y="843" font-size="11" class="muted">Category · file size · date</text>
+  <line x1="449" y1="859" x2="1108" y2="859" class="line"/>
+  <text x="449" y="881" font-size="11" font-weight="bold">Category</text>
+  <rect x="449" y="891" width="184" height="29" rx="6" class="soft"/>
+  <text x="461" y="910" font-size="11">Choose category ⌄</text>
+  <text x="449" y="947" font-size="11" font-weight="bold">Quick summary · key terms · key points</text>
+  <text x="449" y="967" font-size="10" class="muted">Read the generated study notes and extracted terms.</text>
+  <rect x="449" y="983" width="318" height="82" rx="8" class="soft"/>
+  <text x="463" y="1005" font-size="11" font-weight="bold">Study tools</text>
+  <rect x="463" y="1017" width="124" height="30" rx="6" class="outline"/>
+  <text x="474" y="1037" font-size="10">Create flashcards</text>
+  <rect x="595" y="1017" width="150" height="30" rx="6" class="outline"/>
+  <text x="606" y="1037" font-size="10">Practice questions</text>
+  <rect x="786" y="875" width="322" height="153" rx="8" class="soft"/>
+  <text x="802" y="900" font-size="11" font-weight="bold">Original PDF preview</text>
+  <text x="802" y="927" font-size="10" class="muted">Download other original files here.</text>
+  <text x="786" y="1053" font-size="11" font-weight="bold">Full text · scroll to read</text>
+  <line x1="449" y1="1082" x2="1108" y2="1082" class="line"/>
+  <text x="449" y="1107" font-size="10" class="muted">Star · Remove document</text>
+
+  <text x="54" y="1201" font-size="20" font-weight="bold">Key user flows</text>
+  <rect x="54" y="1227" width="390" height="82" rx="12" class="flow"/>
+  <text x="76" y="1258" class="label">Upload and organize</text>
+  <text x="76" y="1284" class="small muted">Add a file → sort it into a category → save</text>
+  <rect x="525" y="1227" width="390" height="82" rx="12" class="flow"/>
+  <text x="547" y="1258" class="label">Read and study</text>
+  <text x="547" y="1284" class="small muted">Open a file → read notes → make questions</text>
+  <rect x="996" y="1227" width="390" height="82" rx="12" class="flow"/>
+  <text x="1018" y="1258" class="label">Find and re-categorize</text>
+  <text x="1018" y="1284" class="small muted">Find a file → open it → change its category</text>
+  <path d="M445 1268 H511" class="arrow"/>
+  <path d="M916 1268 H982" class="arrow"/>
+  <text x="54" y="1362" font-size="12" class="muted">The app suggests categories from file names, readable text, and your keywords.</text>
+</svg>
