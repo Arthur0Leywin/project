@@ -24,10 +24,15 @@ Category dots use orange, green, purple, pink, and blue. The app does not use se
 
 ## Text
 
-- **Manrope** is used for the logo and headings.
-- **DM Sans** is used for body text and buttons.
-- The main page heading is 29 pixels. Other text is smaller to fit the dashboard.
-- If these fonts cannot load, the browser uses its default sans-serif font.
+- **Font family:** Manrope for the logo and headings; DM Sans for body text and buttons. Both use a sans-serif fallback.
+- **Main heading (H1):** Manrope, 29px, bold (700).
+- **Section heading (H2):** Manrope, 15px, bold (700).
+- **Document title:** Manrope, 12px, bold (700).
+- **Dialog title:** Manrope, 19px, bold (700).
+- **Body text:** DM Sans, 13px, regular (400).
+- **Button text:** DM Sans, 11px, semi-bold (600) for main buttons; 10px for smaller buttons.
+- **Small or secondary text:** DM Sans, usually 9–12px; small labels are 9px and bold (700).
+- If the Google Fonts cannot load, the browser uses its default sans-serif font.
 
 ## Page layout
 
